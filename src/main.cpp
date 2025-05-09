@@ -31,6 +31,15 @@ float rgbToGrayscaleLinear(const unsigned char r, const unsigned char g, const u
     return 0.299f * rf + 0.587f * gf + 0.114f * bf;
 }
 
+static float defaultWeightFunction(const holefill::Coord& u, const holefill::Coord& v) {
+    const float epsilon = 0.01f;
+    const float zeta = 3.0f;
+    const float dx = static_cast<float>(u.x - v.x);
+    const float dy = static_cast<float>(u.y - v.y);
+    const float distanceSquared = dx * dx + dy * dy;
+    return 1.0f / powf(distanceSquared + epsilon, zeta);
+}
+
 int main(const int argc, const char** const argv) {
     if (argc < 4) {
         std::cerr << "Usage: " << argv[0] << " <image.png> <mask.png> <output.png>\n";
@@ -67,6 +76,9 @@ int main(const int argc, const char** const argv) {
         // Carve out hole if mask grayscale < 0.5
         grayscaleImage[i] = (maskGray < 0.5f) ? -1.0f : grayscale;
     }
+
+    // Fill the hole using the holefill algorithm
+    holefill::fill(grayscaleImage.data(), width, height, defaultWeightFunction);
 
     // Save output: convert float image [0,1] to 8-bit grayscale for writing
     std::vector<unsigned char> outputImage(width * height);
