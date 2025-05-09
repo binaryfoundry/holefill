@@ -20,6 +20,13 @@ target_compile_definitions(stb INTERFACE
     STB_IMAGE_WRITE_IMPLEMENTATION
 )
 
+# Add nanoflann library
+add_library(nanoflann INTERFACE)
+target_include_directories(nanoflann INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+target_compile_definitions(nanoflann INTERFACE
+    NANOFLANN_USE_OPENMP
+)
+
 # Add source and header files for the library
 set(HOLEFILL_SOURCES
     src/holefill.cpp)
@@ -38,8 +45,8 @@ set(MAIN_SOURCE
 add_executable(${PROJECT_NAME} ${MAIN_SOURCE})
 
 # Link the static library to the executable
-target_link_libraries(${PROJECT_NAME} PRIVATE holefill stb)
-target_link_libraries(holefill PRIVATE stb)
+target_link_libraries(${PROJECT_NAME} PRIVATE holefill stb nanoflann)
+target_link_libraries(holefill PRIVATE stb nanoflann)
 
 # Enable the use of folders in Visual Studio and some other IDEs that support CMake-generated project files.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

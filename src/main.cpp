@@ -54,14 +54,19 @@ static holefill::WeightFunction createWindowedWeightFunction(int windowSize) {
 }
 
 int main(const int argc, const char** const argv) {
-    if (argc < 4) {
-        std::cerr << "Usage: " << argv[0] << " <image.png> <mask.png> <output.png>\n";
+    if (argc < 5) {
+        std::cerr << "Usage: " << argv[0] << " <image.png> <mask.png> <output.png> <fill_method>\n"
+                  << "Fill methods:\n"
+                  << "  exact     - Exact fill using default weight function\n"
+                  << "  approx    - Approximate fill using windowed weight function\n"
+                  << "  search    - Exact fill with search using default weight function\n";
         return 1;
     }
 
     const char* const imagePath = argv[1];
     const char* const maskPath = argv[2];
     const char* const outputPath = argv[3];
+    const std::string fillMethod = argv[4];
 
     int width, height, channels;
     const unsigned char* const imageData = stbi_load(imagePath, &width, &height, &channels, 3);  // Force 3 channels
@@ -90,9 +95,21 @@ int main(const int argc, const char** const argv) {
         grayscaleImage[i] = (maskGray < 0.5f) ? -1.0f : grayscale;
     }
 
-    // Fill the hole using the holefill algorithm
-    const int windowSize = 20;  // You can adjust this value
-    holefill::fillApproximate(grayscaleImage.data(), width, height, createWindowedWeightFunction(windowSize), windowSize);
+    // Fill the hole using the selected method
+    const int windowSize = 21;  // You can adjust this value
+
+    if (fillMethod == "exact") {
+        holefill::fill(grayscaleImage.data(), width, height, defaultWeightFunction);
+    } else if (fillMethod == "approx") {
+        holefill::fillApproximate(grayscaleImage.data(), width, height, createWindowedWeightFunction(windowSize), windowSize);
+    } else if (fillMethod == "search") {
+        holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction, windowSize);
+    } else {
+        std::cerr << "Invalid fill method: " << fillMethod << "\n";
+        stbi_image_free(const_cast<unsigned char*>(imageData));
+        stbi_image_free(const_cast<unsigned char*>(maskData));
+        return 1;
+    }
 
     // Save output: convert float image [0,1] to 8-bit grayscale for writing
     std::vector<unsigned char> outputImage(width * height);

@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "holefill.h"
+#include "nanoflann.hpp"
 
 namespace holefill {
 
@@ -112,6 +113,62 @@ void fillApproximate(float* image, const int32_t width, const int32_t height, We
             image[u.y * width + u.x] = numerator / denominator;
         else
             image[u.y * width + u.x] = 0.0f; // fallback value
+    }
+}
+
+// Adaptor for nanoflann
+struct CoordCloud {
+    std::vector<Coord> points;
+
+    size_t kdtree_get_point_count() const { return points.size(); }
+
+    float kdtree_get_pt(const size_t idx, const size_t dim) const {
+        return (dim == 0) ? static_cast<float>(points[idx].x)
+                          : static_cast<float>(points[idx].y);
+    }
+
+    template <class BBOX>
+    bool kdtree_get_bbox(BBOX&) const { return false; }
+};
+
+void fillExactWithSearch(float* image, int32_t width, int32_t height,
+                         WeightFunction weightFunc,
+                         float radius) {
+    const std::vector<Coord> holePixels = findHolePixels(image, width, height);
+    const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
+
+    CoordCloud cloud;
+    cloud.points = boundaryPixels;
+
+    using KDTree = nanoflann::KDTreeSingleIndexAdaptor<
+        nanoflann::L2_Simple_Adaptor<float, CoordCloud>,
+        CoordCloud, 2, size_t>;
+
+    KDTree tree(2, cloud, {10});
+    tree.buildIndex();
+
+    for (const Coord& u : holePixels) {
+        float queryPt[2] = { static_cast<float>(u.x), static_cast<float>(u.y) };
+
+        std::vector<nanoflann::ResultItem<size_t, float>> matches;
+        const float search_radius_sq = radius * radius;
+        tree.radiusSearch(queryPt, search_radius_sq, matches);
+
+        float numerator = 0.0f;
+        float denominator = 0.0f;
+
+        for (const auto& match : matches) {
+            const Coord& v = cloud.points[match.first];
+            float w = weightFunc(u, v);
+            float intensity = image[v.y * width + v.x];
+            numerator += w * intensity;
+            denominator += w;
+        }
+
+        if (denominator > std::numeric_limits<float>::epsilon())
+            image[u.y * width + u.x] = numerator / denominator;
+        else
+            image[u.y * width + u.x] = 0.0f;
     }
 }
 
