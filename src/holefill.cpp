@@ -7,8 +7,8 @@
 
 namespace holefill {
 
-inline float getPixel(const float* image, int32_t y, int32_t x, int32_t cols) {
-    return image[y * cols + x];
+inline float getPixel(const float* image, int32_t x, int32_t y, int32_t width) {
+    return image[y * width + x];
 }
 
 std::vector<Coord> findBoundaryPixels(const float* image, const int32_t width, const int32_t height, const std::vector<Coord>& holePixels, const bool use8Connectivity = true) {
@@ -34,7 +34,7 @@ std::vector<Coord> findBoundaryPixels(const float* image, const int32_t width, c
             if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
                 const Coord neighbor{nx, ny};
 
-                if (holeSet.count(neighbor) == 0 && getPixel(image, ny, nx, width) >= 0.0f) {
+                if (holeSet.count(neighbor) == 0 && getPixel(image, nx, ny, width) >= 0.0f) {
                     if (boundarySet.insert(neighbor).second) {
                         boundaryPixels.push_back(neighbor);
                     }
@@ -51,7 +51,7 @@ std::vector<Coord> findHolePixels(const float* image, uint32_t width, uint32_t h
 
     for (uint32_t y = 0; y < height; ++y) {
         for (uint32_t x = 0; x < width; ++x) {
-            if (getPixel(image, y, x, width) < 0.0f) {
+            if (getPixel(image, x, y, width) < 0.0f) {
                 holePixels.emplace_back(x, y);
             }
         }
@@ -70,7 +70,7 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
 
         for (const auto& v : boundaryPixels) {
             float w = weightFunc(u, v);
-            float intensity = getPixel(image, v.y, v.x, width);
+            float intensity = getPixel(image, v.x, v.y, width);
             numerator += w * intensity;
             denominator += w;
         }
