@@ -76,10 +76,9 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
             denominator += w;
         }
 
-        if (std::abs(denominator) > std::numeric_limits<float>::epsilon())
-            image[u.y * width + u.x] = numerator / denominator;
-        else
-            image[u.y * width + u.x] = 0.0f; // fallback
+        image[u.y * width + u.x] = (denominator > std::numeric_limits<float>::epsilon())
+            ? numerator / denominator
+            : 0.0f;  // Fallback value
     }
 }
 
@@ -109,10 +108,9 @@ void fillApproximate(float* image, const int32_t width, const int32_t height, We
             }
         }
 
-        if (denominator > std::numeric_limits<float>::epsilon())
-            image[u.y * width + u.x] = numerator / denominator;
-        else
-            image[u.y * width + u.x] = 0.0f; // fallback value
+        image[u.y * width + u.x] = (denominator > std::numeric_limits<float>::epsilon())
+            ? numerator / denominator
+            : 0.0f;  // Fallback value
     }
 }
 
@@ -165,10 +163,9 @@ void fillExactWithSearch(float* image, int32_t width, int32_t height,
             denominator += w;
         }
 
-        if (denominator > std::numeric_limits<float>::epsilon())
-            image[u.y * width + u.x] = numerator / denominator;
-        else
-            image[u.y * width + u.x] = 0.0f;
+        image[u.y * width + u.x] = (denominator > std::numeric_limits<float>::epsilon())
+            ? numerator / denominator
+            : 0.0f;  // Fallback value
     }
 }
 
