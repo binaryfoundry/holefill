@@ -71,7 +71,7 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
  *
  * @see fill for the full version that considers all boundary pixels in the image
  */
-void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int windowSize);
+void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int32_t windowSize);
 
 /**
  * @brief Fills holes in an image using a KD-tree for efficient nearest neighbor search.

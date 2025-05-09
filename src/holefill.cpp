@@ -82,8 +82,8 @@ void fill(float* const image, const int32_t width, const int32_t height, const W
     }
 }
 
-void fillApproximate(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc, const int windowSize) {
-    const int halfWindow = windowSize / 2;
+void fillApproximate(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc, const int32_t windowSize) {
+    const int32_t halfWindow = windowSize / 2;
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
 
     for (const auto& u : holePixels) {
@@ -91,10 +91,10 @@ void fillApproximate(float* const image, const int32_t width, const int32_t heig
         float denominator = 0.0f;
 
         // Loop over fixed-size window
-        for (int dy = -halfWindow; dy <= halfWindow; ++dy) {
-            for (int dx = -halfWindow; dx <= halfWindow; ++dx) {
-                const int nx = u.x + dx;
-                const int ny = u.y + dy;
+        for (int32_t dy = -halfWindow; dy <= halfWindow; ++dy) {
+            for (int32_t dx = -halfWindow; dx <= halfWindow; ++dx) {
+                const int32_t nx = u.x + dx;
+                const int32_t ny = u.y + dy;
 
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                     const float value = image[ny * width + nx];
