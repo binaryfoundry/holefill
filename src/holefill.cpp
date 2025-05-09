@@ -8,11 +8,11 @@
 
 namespace holefill {
 
-inline float getPixel(const float* image, int32_t x, int32_t y, int32_t width) {
+inline float getPixel(const float* const image, const int32_t x, const int32_t y, const int32_t width) {
     return image[y * width + x];
 }
 
-std::vector<Coord> findBoundaryPixels(const float* image, const int32_t width, const int32_t height, const std::vector<Coord>& holePixels, const bool use8Connectivity = true) {
+std::vector<Coord> findBoundaryPixels(const float* const image, const int32_t width, const int32_t height, const std::vector<Coord>& holePixels, const bool use8Connectivity = true) {
     std::vector<Coord> boundaryPixels;
     std::set<Coord> holeSet(holePixels.begin(), holePixels.end());
     std::set<Coord> boundarySet;  // to avoid duplicates
@@ -47,7 +47,7 @@ std::vector<Coord> findBoundaryPixels(const float* image, const int32_t width, c
     return boundaryPixels;
 };
 
-std::vector<Coord> findHolePixels(const float* image, uint32_t width, uint32_t height) {
+std::vector<Coord> findHolePixels(const float* const image, const uint32_t width, const uint32_t height) {
     std::vector<Coord> holePixels;
 
     for (uint32_t y = 0; y < height; ++y) {
@@ -61,7 +61,7 @@ std::vector<Coord> findHolePixels(const float* image, uint32_t width, uint32_t h
     return holePixels;
 }
 
-void fill(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc) {
+void fill(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
 
@@ -70,8 +70,8 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
         float denominator = 0.0f;
 
         for (const auto& v : boundaryPixels) {
-            float w = weightFunc(u, v);
-            float intensity = getPixel(image, v.x, v.y, width);
+            const float w = weightFunc(u, v);
+            const float intensity = getPixel(image, v.x, v.y, width);
             numerator += w * intensity;
             denominator += w;
         }
@@ -82,7 +82,7 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
     }
 }
 
-void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int windowSize) {
+void fillApproximate(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc, const int windowSize) {
     const int halfWindow = windowSize / 2;
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
 
@@ -93,14 +93,14 @@ void fillApproximate(float* image, const int32_t width, const int32_t height, We
         // Loop over fixed-size window
         for (int dy = -halfWindow; dy <= halfWindow; ++dy) {
             for (int dx = -halfWindow; dx <= halfWindow; ++dx) {
-                int nx = u.x + dx;
-                int ny = u.y + dy;
+                const int nx = u.x + dx;
+                const int ny = u.y + dy;
 
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    float value = image[ny * width + nx];
+                    const float value = image[ny * width + nx];
                     if (value >= 0.0f) {  // Valid pixel (not part of hole)
-                        Coord v{nx, ny};
-                        float weight = weightFunc(u, v);
+                        const Coord v{nx, ny};
+                        const float weight = weightFunc(u, v);
                         numerator += weight * value;
                         denominator += weight;
                     }
@@ -129,8 +129,8 @@ struct CoordCloud {
     bool kdtree_get_bbox(BBOX&) const { return false; }
 };
 
-void fillExactWithSearch(float* image, int32_t width, int32_t height,
-                         WeightFunction weightFunc) {
+void fillExactWithSearch(float* const image, const int32_t width, const int32_t height,
+                         const WeightFunction weightFunc) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
 
@@ -146,12 +146,12 @@ void fillExactWithSearch(float* image, int32_t width, int32_t height,
     // Calculate maximum distance from center to any hole pixel
     float maxDistSq = 0.0f;
     for (const Coord& p : holePixels) {
-        float dx = p.x - centerX;
-        float dy = p.y - centerY;
-        float distSq = dx * dx + dy * dy;
+        const float dx = p.x - centerX;
+        const float dy = p.y - centerY;
+        const float distSq = dx * dx + dy * dy;
         maxDistSq = std::max(maxDistSq, distSq);
     }
-    float radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
+    const float radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
 
     CoordCloud cloud;
     cloud.points = boundaryPixels;
@@ -164,7 +164,7 @@ void fillExactWithSearch(float* image, int32_t width, int32_t height,
     tree.buildIndex();
 
     for (const Coord& u : holePixels) {
-        float queryPt[2] = { static_cast<float>(u.x), static_cast<float>(u.y) };
+        const float queryPt[2] = { static_cast<float>(u.x), static_cast<float>(u.y) };
 
         std::vector<nanoflann::ResultItem<size_t, float>> matches;
         const float search_radius_sq = radius * radius;
@@ -175,8 +175,8 @@ void fillExactWithSearch(float* image, int32_t width, int32_t height,
 
         for (const auto& match : matches) {
             const Coord& v = cloud.points[match.first];
-            float w = weightFunc(u, v);
-            float intensity = image[v.y * width + v.x];
+            const float w = weightFunc(u, v);
+            const float intensity = image[v.y * width + v.x];
             numerator += w * intensity;
             denominator += w;
         }
