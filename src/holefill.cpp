@@ -130,10 +130,28 @@ struct CoordCloud {
 };
 
 void fillExactWithSearch(float* image, int32_t width, int32_t height,
-                         WeightFunction weightFunc,
-                         float radius) {
+                         WeightFunction weightFunc) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
+
+    // Calculate hole center and radius
+    float centerX = 0.0f, centerY = 0.0f;
+    for (const Coord& p : holePixels) {
+        centerX += p.x;
+        centerY += p.y;
+    }
+    centerX /= holePixels.size();
+    centerY /= holePixels.size();
+
+    // Calculate maximum distance from center to any hole pixel
+    float maxDistSq = 0.0f;
+    for (const Coord& p : holePixels) {
+        float dx = p.x - centerX;
+        float dy = p.y - centerY;
+        float distSq = dx * dx + dy * dy;
+        maxDistSq = std::max(maxDistSq, distSq);
+    }
+    float radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
 
     CoordCloud cloud;
     cloud.points = boundaryPixels;

@@ -96,14 +96,13 @@ int main(const int argc, const char** const argv) {
     }
 
     // Fill the hole using the selected method
-    const int windowSize = 21;  // You can adjust this value
-
     if (fillMethod == "exact") {
         holefill::fill(grayscaleImage.data(), width, height, defaultWeightFunction);
     } else if (fillMethod == "approx") {
+        const int windowSize = 21;  // You can adjust this value
         holefill::fillApproximate(grayscaleImage.data(), width, height, createWindowedWeightFunction(windowSize), windowSize);
     } else if (fillMethod == "search") {
-        holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction, windowSize);
+        holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction);
     } else {
         std::cerr << "Invalid fill method: " << fillMethod << "\n";
         stbi_image_free(const_cast<unsigned char*>(imageData));

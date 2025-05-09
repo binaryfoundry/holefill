@@ -77,30 +77,29 @@ void fillApproximate(float* image, const int32_t width, const int32_t height, We
  * @brief Fills holes in an image using a KD-tree for efficient nearest neighbor search.
  *
  * This function implements an exact hole-filling algorithm that uses a KD-tree to efficiently
- * find boundary pixels within a specified radius of each hole pixel. For each hole pixel:
- * 1. Uses KD-tree to find all boundary pixels within the specified radius
+ * find boundary pixels within a calculated radius of each hole pixel. For each hole pixel:
+ * 1. Uses KD-tree to find all boundary pixels within the calculated radius
  * 2. Uses the provided weight function to calculate weights between pixels
  * 3. Takes a weighted average of the found boundary pixels' values
  *
  * This version combines the accuracy of considering all relevant boundary pixels with
  * the efficiency of spatial indexing, making it faster than the full version for large images
- * while maintaining accuracy.
+ * while maintaining accuracy. The search radius is automatically calculated based on the
+ * size of the hole to ensure all relevant boundary pixels are considered.
  *
  * @param image Pointer to the image data as a flat array of floats. Negative values indicate holes.
  * @param width Width of the image in pixels
  * @param height Height of the image in pixels
  * @param weightFunc Function that calculates the weight between two pixels based on their coordinates.
  *                   The weight should be higher for closer pixels and lower for distant pixels.
- * @param radius Maximum distance to search for boundary pixels around each hole pixel
  *
  * @note The image is modified in-place. Hole pixels are replaced with the weighted average
- *       of boundary pixels found within the specified radius.
+ *       of boundary pixels found within the calculated radius.
  *
  * @see fill for the full version that considers all boundary pixels
  * @see fillApproximate for the window-based approximate version
  */
 void fillExactWithSearch(float* image, int32_t width, int32_t height,
-                         WeightFunction weightFunc,
-                         float radius = 10.0f);
+                         WeightFunction weightFunc);
 
 } // namespace holefill
