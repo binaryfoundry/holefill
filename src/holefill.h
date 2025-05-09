@@ -87,7 +87,7 @@ void fillApproximate(float* image, const int32_t width, const int32_t height, We
  * while maintaining accuracy. The search radius is automatically calculated based on the
  * size of the hole to ensure all relevant boundary pixels are considered.
  *
- * @param image Pointer to the image data as a flat array of floats. Negative values indicate holes.
+ * @param image Pointer to the image data as a flat array of floats, linear values. Negative values indicate holes.
  * @param width Width of the image in pixels
  * @param height Height of the image in pixels
  * @param weightFunc Function that calculates the weight between two pixels based on their coordinates.
