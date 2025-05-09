@@ -40,6 +40,19 @@ static float defaultWeightFunction(const holefill::Coord& u, const holefill::Coo
     return 1.0f / powf(distanceSquared + epsilon, zeta);
 }
 
+// Weight function that takes window size into account
+static holefill::WeightFunction createWindowedWeightFunction(int windowSize) {
+    return [windowSize](const holefill::Coord& u, const holefill::Coord& v) {
+        const float epsilon = 0.01f;
+        const float zeta = 3.0f;
+        const float dx = static_cast<float>(u.x - v.x);
+        const float dy = static_cast<float>(u.y - v.y);
+        // Scale the distance by the window size
+        const float scaledDistanceSquared = (dx * dx + dy * dy) / (windowSize * windowSize);
+        return 1.0f / powf(scaledDistanceSquared + epsilon, zeta);
+    };
+}
+
 int main(const int argc, const char** const argv) {
     if (argc < 4) {
         std::cerr << "Usage: " << argv[0] << " <image.png> <mask.png> <output.png>\n";
@@ -78,7 +91,8 @@ int main(const int argc, const char** const argv) {
     }
 
     // Fill the hole using the holefill algorithm
-    holefill::fill(grayscaleImage.data(), width, height, defaultWeightFunction);
+    const int windowSize = 20;  // You can adjust this value
+    holefill::fillApproximate(grayscaleImage.data(), width, height, createWindowedWeightFunction(windowSize), windowSize);
 
     // Save output: convert float image [0,1] to 8-bit grayscale for writing
     std::vector<unsigned char> outputImage(width * height);

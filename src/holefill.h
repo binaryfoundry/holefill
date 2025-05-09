@@ -20,4 +20,6 @@ using WeightFunction = std::function<float(const Coord&, const Coord&)>;
 void fill(float* image, const int32_t width, const int32_t height, 
           WeightFunction weightFunc);
 
+void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int windowSize = -1);
+
 } // namespace holefill

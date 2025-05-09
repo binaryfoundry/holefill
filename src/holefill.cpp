@@ -82,5 +82,38 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
     }
 }
 
+void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int windowSize) {
+    const int halfWindow = windowSize / 2;
+    const std::vector<Coord> holePixels = findHolePixels(image, width, height);
+
+    for (const auto& u : holePixels) {
+        float numerator = 0.0f;
+        float denominator = 0.0f;
+
+        // Loop over fixed-size window
+        for (int dy = -halfWindow; dy <= halfWindow; ++dy) {
+            for (int dx = -halfWindow; dx <= halfWindow; ++dx) {
+                int nx = u.x + dx;
+                int ny = u.y + dy;
+
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    float value = image[ny * width + nx];
+                    if (value >= 0.0f) {  // Valid pixel (not part of hole)
+                        Coord v{nx, ny};
+                        float weight = weightFunc(u, v);
+                        numerator += weight * value;
+                        denominator += weight;
+                    }
+                }
+            }
+        }
+
+        if (denominator > std::numeric_limits<float>::epsilon())
+            image[u.y * width + u.x] = numerator / denominator;
+        else
+            image[u.y * width + u.x] = 0.0f; // fallback value
+    }
+}
+
 } // namespace holefill
 
