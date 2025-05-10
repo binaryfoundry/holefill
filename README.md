@@ -15,7 +15,6 @@ This library provides three different algorithms for filling holes in images:
 ## Features
 
 - Multiple algorithms with different speed/accuracy trade-offs
-- Support for both 4-connected and 8-connected neighborhoods
 - Customizable weight functions for distance-based weighting
 - Efficient spatial indexing using KD-trees
 - Linear time complexity for the approximate version
@@ -25,6 +24,10 @@ This library provides three different algorithms for filling holes in images:
 
 - C++11 or later
 - [nanoflann](https://github.com/jlblancoc/nanoflann) for KD-tree implementation
+
+## Further Work
+
+- Much more testing required
 
 ## Usage
 
