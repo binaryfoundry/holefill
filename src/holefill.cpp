@@ -85,6 +85,7 @@ void fill(float* const image, const int32_t width, const int32_t height, const W
 void fillApproximate(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc, const int32_t windowSize) {
     const int32_t halfWindow = windowSize / 2;
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
+    std::set<Coord> holeSet(holePixels.begin(), holePixels.end());
 
     for (const auto& u : holePixels) {
         float numerator = 0.0f;
@@ -99,10 +100,30 @@ void fillApproximate(float* const image, const int32_t width, const int32_t heig
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                     const float value = image[ny * width + nx];
                     if (value >= 0.0f) {  // Valid pixel (not part of hole)
-                        const Coord v{nx, ny};
-                        const float weight = weightFunc(u, v);
-                        numerator += weight * value;
-                        denominator += weight;
+                        // Check if this is a boundary pixel with 8-connectivity
+                        bool isBoundary = false;
+                        const std::vector<Coord> offsets = {
+                            {-1, 0}, {1, 0}, {0, -1}, {0, 1},
+                            {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+                        };
+                        for (const Coord& off : offsets) {
+                            const int32_t checkX = nx + off.x;
+                            const int32_t checkY = ny + off.y;
+                            if (checkX >= 0 && checkX < width && checkY >= 0 && checkY < height) {
+                                const Coord check{checkX, checkY};
+                                if (holeSet.count(check) > 0) {
+                                    isBoundary = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isBoundary) {
+                            const Coord v{nx, ny};
+                            const float weight = weightFunc(u, v);
+                            numerator += weight * value;
+                            denominator += weight;
+                        }
                     }
                 }
             }
