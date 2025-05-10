@@ -68,7 +68,7 @@ holefill::fillExactWithSearch(image, width, height, weightFunc);
 - Time Complexity: O(n * log m) where n is number of hole pixels and m is number of boundary pixels
 - Space Complexity: O(n + m)
 - Best for: Large images where accuracy is important
-- Uses KD-tree for efficient spatial queries
+- Uses KD-tree for efficient spatial queries of KNN.
 
 ## Image Format
 

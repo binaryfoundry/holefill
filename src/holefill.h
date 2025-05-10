@@ -70,32 +70,46 @@ void fill(float* image, const int32_t width, const int32_t height, WeightFunctio
 void fillApproximate(float* image, const int32_t width, const int32_t height);
 
 /**
- * @brief Fills holes in an image using a KD-tree for efficient nearest neighbor search.
+ * @brief Fills holes in an image using a KD-tree for efficient k-nearest neighbor search.
  *
  * This function implements an exact hole-filling algorithm that uses a KD-tree to efficiently
- * find boundary pixels within a calculated radius of each hole pixel. For each hole pixel:
- * 1. Uses KD-tree to find all boundary pixels within the calculated radius
- * 2. Uses the provided weight function to calculate weights between pixels
- * 3. Takes a weighted average of the found boundary pixels' values
+ * find the k-nearest boundary pixels for each hole pixel. The algorithm works as follows:
+ * 1. Identifies all hole pixels (pixels with negative values) and boundary pixels
+ * 2. Builds a KD-tree from the boundary pixels for efficient spatial queries
+ * 3. For each hole pixel:
+ *    - Uses the KD-tree to find its k-nearest boundary pixels, where k is nearestNeighborMax
+ *    - Uses the provided weight function to calculate weights between pixels
+ *    - Takes a weighted average of the found boundary pixels' values
  *
- * This version combines the accuracy of considering all relevant boundary pixels with
- * the efficiency of spatial indexing, making it faster than the full version for large images
- * while maintaining accuracy. The search radius is automatically calculated based on the
- * size of the hole to ensure all relevant boundary pixels are considered.
+ * Time Complexity: O(n * log m) where:
+ * - n is the number of hole pixels
+ * - m is the number of boundary pixels
+ * - The KD-tree provides O(log m) nearest neighbor queries
+ * In worst case (when m ≈ n), this becomes O(n * log n)
+ *
+ * Space Complexity: O(m) for storing the KD-tree and boundary pixels
+ *
+ * This version combines the accuracy of considering the k-nearest boundary pixels with
+ * the efficiency of spatial indexing. It's faster than the full version for large images
+ * while maintaining good accuracy by focusing on the most relevant boundary pixels.
  *
  * @param image Pointer to the image data as a flat array of floats, linear values. Negative values indicate holes.
  * @param width Width of the image in pixels
  * @param height Height of the image in pixels
  * @param weightFunc Function that calculates the weight between two pixels based on their coordinates.
  *                   The weight should be higher for closer pixels and lower for distant pixels.
+ * @param nearestNeighborMax Maximum number of nearest boundary pixels to consider for each hole pixel.
+ *                          This parameter controls the trade-off between accuracy and performance.
+ *                          A larger value will consider more boundary pixels but increase computation time.
  *
  * @note The image is modified in-place. Hole pixels are replaced with the weighted average
- *       of boundary pixels found within the calculated radius.
+ *       of their k-nearest boundary pixels. The algorithm uses nanoflann's KD-tree implementation
+ *       for efficient nearest neighbor search.
  *
  * @see fill for the full version that considers all boundary pixels
  * @see fillApproximate for the window-based approximate version
  */
 void fillExactWithSearch(float* image, int32_t width, int32_t height,
-                         WeightFunction weightFunc);
+                         WeightFunction weightFunc, const size_t nearestNeighborMax);
 
 } // namespace holefill

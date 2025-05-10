@@ -62,38 +62,6 @@ std::vector<Coord> findHolePixels(const float* const image, const uint32_t width
     return holePixels;
 }
 
-struct HoleInfo {
-    float centerX;
-    float centerY;
-    float radius;
-};
-
-HoleInfo calculateHoleInfo(const std::vector<Coord>& holePixels) {
-    HoleInfo info;
-    info.centerX = 0.0f;
-    info.centerY = 0.0f;
-
-    // Calculate center
-    for (const Coord& p : holePixels) {
-        info.centerX += p.x;
-        info.centerY += p.y;
-    }
-    info.centerX /= holePixels.size();
-    info.centerY /= holePixels.size();
-
-    // Calculate maximum distance from center to any hole pixel
-    float maxDistSq = 0.0f;
-    for (const Coord& p : holePixels) {
-        const float dx = p.x - info.centerX;
-        const float dy = p.y - info.centerY;
-        const float distSq = dx * dx + dy * dy;
-        maxDistSq = std::max(maxDistSq, distSq);
-    }
-    info.radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
-
-    return info;
-}
-
 void fill(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
@@ -203,12 +171,34 @@ struct CoordCloud {
     bool kdtree_get_bbox(BBOX&) const { return false; }
 };
 
+float estimateCutoffRadius(const WeightFunction& weightFunc, float threshold = 1e-7f) {
+    // Start with a small radius and increase until weight drops below threshold
+    float radius = 1.0f;
+    const float maxRadius = 1000.0f;  // Safety limit
+    const float step = 1.0f;
+    
+    // Test point at origin
+    const Coord origin{0, 0};
+    
+    while (radius < maxRadius) {
+        // Test point at current radius
+        Coord testPoint{static_cast<int32_t>(radius), 0};
+        float weight = weightFunc(origin, testPoint);
+        
+        if (weight < threshold) {
+            return radius * 1.5;  // Increse 50% for safety
+        }
+        
+        radius += step;
+    }
+    
+    return maxRadius;
+}
+
 void fillExactWithSearch(float* const image, const int32_t width, const int32_t height,
-                         const WeightFunction weightFunc) {
+                         const WeightFunction weightFunc, const size_t nearestNeighborMax) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
-
-    const HoleInfo holeInfo = calculateHoleInfo(holePixels);
 
     CoordCloud cloud;
     cloud.points = boundaryPixels;
@@ -220,18 +210,23 @@ void fillExactWithSearch(float* const image, const int32_t width, const int32_t 
     KDTree tree(2, cloud, {10});
     tree.buildIndex();
 
+    const size_t k = nearestNeighborMax;  // Number of nearest neighbors
+
     for (const Coord& u : holePixels) {
         const float queryPt[2] = { static_cast<float>(u.x), static_cast<float>(u.y) };
 
-        std::vector<nanoflann::ResultItem<size_t, float>> matches;
-        const float search_radius_sq = holeInfo.radius * holeInfo.radius;
-        tree.radiusSearch(queryPt, search_radius_sq, matches);
+        std::vector<size_t> indices(k);
+        std::vector<float> distances(k);
+
+        tree.knnSearch(queryPt, k, indices.data(), distances.data());
 
         float numerator = 0.0f;
         float denominator = 0.0f;
 
-        for (const auto& match : matches) {
-            const Coord& v = cloud.points[match.first];
+        for (size_t i = 0; i < k; ++i) {
+            if (indices[i] == std::numeric_limits<size_t>::max()) continue; // Skip invalid indices
+
+            const Coord& v = cloud.points[indices[i]];
             const float w = weightFunc(u, v);
             const float intensity = image[v.y * width + v.x];
             numerator += w * intensity;

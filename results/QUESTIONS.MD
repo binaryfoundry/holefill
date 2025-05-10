@@ -67,8 +67,10 @@
 
 **Describe and implement an algorithm that finds the exact solution in O(n log n). In this section, feel free to use any algorithmic functionality provided by external libraries as needed.**
 
+The requirement of O(n log n) gives us a clue that a search must be involved. We will do a K-Nearest Neighbors (k-NN) spatial search.
+
 ### Answer:
 - **Time Complexity**: O(n * log m)
-  - For each hole pixel (n), we perform a logarithmic search (log m) in the boundary pixels
+  - For each hole pixel (n), we perform a logarithmic search (log m) of nearest neighbor boundary pixels
   - The KD-tree allows us to find relevant boundary pixels efficiently
   - Expressed only in terms of n: O(n * log n) in worst case (when m ≈ n)
