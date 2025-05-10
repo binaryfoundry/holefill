@@ -2,7 +2,7 @@
 
 A C++ library for filling holes in images using various algorithms with different trade-offs between speed and accuracy.
 
-For answers to the questions in this exercise, see [results/QUESTIONS.MD](results/QUESTIONS.MD).
+For answers to the questions in this exercise, see [results/README.md](results/README.md).
 
 ## Overview
 
