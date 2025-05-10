@@ -1,5 +1,13 @@
 # Hole Filling Algorithm Analysis
 
+Hole filled with naive algorithm.
+
+```cpp
+holefill::fill(image, width, height, weightFunc);
+```
+
+![result image](Out.png "Filled Hole")
+
 ## Question 1: Complexity Analysis
 
 **If there are boundary pixels and pixels inside the hole, what's the complexity of the algorithm that fills the hole, assuming that the hole and boundary were already found? Try to also express the complexity only in terms of n.**
