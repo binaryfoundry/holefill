@@ -40,19 +40,6 @@ static float defaultWeightFunction(const holefill::Coord& u, const holefill::Coo
     return 1.0f / powf(distanceSquared + epsilon, zeta);
 }
 
-// Weight function that takes window size into account
-static holefill::WeightFunction createWindowedWeightFunction(int windowSize) {
-    return [windowSize](const holefill::Coord& u, const holefill::Coord& v) {
-        const float epsilon = 0.01f;
-        const float zeta = 3.0f;
-        const float dx = static_cast<float>(u.x - v.x);
-        const float dy = static_cast<float>(u.y - v.y);
-        // Scale the distance by the window size
-        const float scaledDistanceSquared = (dx * dx + dy * dy) / (windowSize * windowSize);
-        return 1.0f / powf(scaledDistanceSquared + epsilon, zeta);
-    };
-}
-
 int main(const int argc, const char** const argv) {
     if (argc < 5) {
         std::cerr << "Usage: " << argv[0] << " <image.png> <mask.png> <output.png> <fill_method>\n"
@@ -99,8 +86,7 @@ int main(const int argc, const char** const argv) {
     if (fillMethod == "exact") {
         holefill::fill(grayscaleImage.data(), width, height, defaultWeightFunction);
     } else if (fillMethod == "approx") {
-        const int windowSize = 21;  // You can adjust this value
-        holefill::fillApproximate(grayscaleImage.data(), width, height, createWindowedWeightFunction(windowSize), windowSize);
+        holefill::fillApproximate(grayscaleImage.data(), width, height);
     } else if (fillMethod == "search") {
         holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction);
     } else {

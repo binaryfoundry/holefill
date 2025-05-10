@@ -45,33 +45,29 @@ using WeightFunction = std::function<float(const Coord&, const Coord&)>;
 void fill(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc);
 
 /**
- * @brief Fills holes in an image using a weighted average of boundary pixels within a fixed window.
+ * @brief Fills holes in an image using a fast linear-time algorithm that processes pixels from boundary inward.
  *
- * This function implements an approximate hole-filling algorithm that only considers boundary pixels
- * within a fixed-size window around each hole. For each hole pixel (pixels with negative values):
- * 1. Looks at boundary pixels within a window of specified size around the hole pixel
- * 2. Calculates a weight for each boundary pixel based on its distance from the hole pixel
- * 3. Takes a weighted average of the boundary pixels' values, where:
- *    - Closer boundary pixels get higher weights
- *    - Further boundary pixels get lower weights
+ * This function implements an efficient hole-filling algorithm that processes pixels in order
+ * from the boundary inward. For each hole pixel (pixels with negative values):
+ * 1. Processes pixels in order of their distance from the boundary
+ * 2. For each pixel, takes the average of its 8-connected non-hole neighbors
+ * 3. Once a pixel is filled, its value is used for filling subsequent pixels
  *
- * This is the approximate version that only considers nearby boundary pixels,
- * making it faster but potentially less accurate than the full version.
+ * This version uses a queue-based approach to ensure each pixel is processed exactly once,
+ * making it O(h) time complexity where h is the number of hole pixels. It uses 8-connected
+ * neighborhood for better quality results.
  *
  * @param image Pointer to the image data as a flat array of floats, linear values. Negative values indicate holes.
  * @param width Width of the image in pixels
  * @param height Height of the image in pixels
- * @param weightFunc Function that calculates the weight between two pixels based on their coordinates.
- *                   The weight should be higher for closer pixels and lower for distant pixels.
- * @param windowSize Size of the square window to consider around each hole pixel.
- *                   Must be odd and positive.
  *
  * @note The image is modified in-place. Hole pixels (negative values) are replaced with
- *       the weighted average of surrounding valid pixels within the window.
+ *       the average of their non-hole neighbors.
  *
- * @see fill for the full version that considers all boundary pixels in the image
+ * @see fill for the full version that considers all boundary pixels
+ * @see fillExactWithSearch for the KD-tree based version
  */
-void fillApproximate(float* image, const int32_t width, const int32_t height, WeightFunction weightFunc, int32_t windowSize);
+void fillApproximate(float* image, const int32_t width, const int32_t height);
 
 /**
  * @brief Fills holes in an image using a KD-tree for efficient nearest neighbor search.
