@@ -61,6 +61,38 @@ std::vector<Coord> findHolePixels(const float* const image, const uint32_t width
     return holePixels;
 }
 
+struct HoleInfo {
+    float centerX;
+    float centerY;
+    float radius;
+};
+
+HoleInfo calculateHoleInfo(const std::vector<Coord>& holePixels) {
+    HoleInfo info;
+    info.centerX = 0.0f;
+    info.centerY = 0.0f;
+
+    // Calculate center
+    for (const Coord& p : holePixels) {
+        info.centerX += p.x;
+        info.centerY += p.y;
+    }
+    info.centerX /= holePixels.size();
+    info.centerY /= holePixels.size();
+
+    // Calculate maximum distance from center to any hole pixel
+    float maxDistSq = 0.0f;
+    for (const Coord& p : holePixels) {
+        const float dx = p.x - info.centerX;
+        const float dy = p.y - info.centerY;
+        const float distSq = dx * dx + dy * dy;
+        maxDistSq = std::max(maxDistSq, distSq);
+    }
+    info.radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
+
+    return info;
+}
+
 void fill(float* const image, const int32_t width, const int32_t height, const WeightFunction weightFunc) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
@@ -155,24 +187,7 @@ void fillExactWithSearch(float* const image, const int32_t width, const int32_t 
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
     const std::vector<Coord> boundaryPixels = findBoundaryPixels(image, width, height, holePixels);
 
-    // Calculate hole center and radius
-    float centerX = 0.0f, centerY = 0.0f;
-    for (const Coord& p : holePixels) {
-        centerX += p.x;
-        centerY += p.y;
-    }
-    centerX /= holePixels.size();
-    centerY /= holePixels.size();
-
-    // Calculate maximum distance from center to any hole pixel
-    float maxDistSq = 0.0f;
-    for (const Coord& p : holePixels) {
-        const float dx = p.x - centerX;
-        const float dy = p.y - centerY;
-        const float distSq = dx * dx + dy * dy;
-        maxDistSq = std::max(maxDistSq, distSq);
-    }
-    const float radius = std::sqrt(maxDistSq) * 1.5f;  // Add 50% margin to ensure we capture all relevant boundary pixels
+    const HoleInfo holeInfo = calculateHoleInfo(holePixels);
 
     CoordCloud cloud;
     cloud.points = boundaryPixels;
@@ -188,7 +203,7 @@ void fillExactWithSearch(float* const image, const int32_t width, const int32_t 
         const float queryPt[2] = { static_cast<float>(u.x), static_cast<float>(u.y) };
 
         std::vector<nanoflann::ResultItem<size_t, float>> matches;
-        const float search_radius_sq = radius * radius;
+        const float search_radius_sq = holeInfo.radius * holeInfo.radius;
         tree.radiusSearch(queryPt, search_radius_sq, matches);
 
         float numerator = 0.0f;
