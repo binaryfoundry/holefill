@@ -28,6 +28,7 @@ This library provides three different algorithms for filling holes in images:
 ## Further Work
 
 - Much more testing required
+- Fix all compiler warnings
 
 ## Usage
 
