@@ -88,7 +88,7 @@ int main(const int argc, const char** const argv) {
     } else if (fillMethod == "approx") {
         holefill::fillApproximate(grayscaleImage.data(), width, height);
     } else if (fillMethod == "search") {
-        holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction);
+        holefill::fillExactWithSearch(grayscaleImage.data(), width, height, defaultWeightFunction, 100);
     } else {
         std::cerr << "Invalid fill method: " << fillMethod << "\n";
         stbi_image_free(const_cast<unsigned char*>(imageData));
