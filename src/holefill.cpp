@@ -171,30 +171,6 @@ struct CoordCloud {
     bool kdtree_get_bbox(BBOX&) const { return false; }
 };
 
-float estimateCutoffRadius(const WeightFunction& weightFunc, float threshold = 1e-7f) {
-    // Start with a small radius and increase until weight drops below threshold
-    float radius = 1.0f;
-    const float maxRadius = 1000.0f;  // Safety limit
-    const float step = 1.0f;
-    
-    // Test point at origin
-    const Coord origin{0, 0};
-    
-    while (radius < maxRadius) {
-        // Test point at current radius
-        Coord testPoint{static_cast<int32_t>(radius), 0};
-        float weight = weightFunc(origin, testPoint);
-        
-        if (weight < threshold) {
-            return radius * 1.5;  // Increse 50% for safety
-        }
-        
-        radius += step;
-    }
-    
-    return maxRadius;
-}
-
 void fillExactWithSearch(float* const image, const int32_t width, const int32_t height,
                          const WeightFunction weightFunc, const size_t nearestNeighborMax) {
     const std::vector<Coord> holePixels = findHolePixels(image, width, height);
